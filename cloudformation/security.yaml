@@ -1,0 +1,52 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'AWS Infrastructure - Security Module'
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: 'nt548-lab1'
+  MyIp:
+    Type: String
+    Default: '0.0.0.0/0'
+    Description: 'IP address allowed to SSH to the Public EC2'
+
+Resources:
+  PublicSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow SSH from specified IP
+      VpcId: !ImportValue 
+        'Fn::Sub': '${ProjectName}-VpcId'
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref MyIp
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-public-ec2-sg'
+
+  PrivateSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow SSH from Public EC2
+      VpcId: !ImportValue 
+        'Fn::Sub': '${ProjectName}-VpcId'
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          SourceSecurityGroupId: !Ref PublicSecurityGroup
+      Tags:
+        - Key: Name
+          Value: !Sub '${ProjectName}-private-ec2-sg'
+
+Outputs:
+  PublicSecurityGroupId:
+    Value: !Ref PublicSecurityGroup
+    Export:
+      Name: !Sub '${ProjectName}-PublicSecurityGroupId'
+  PrivateSecurityGroupId:
+    Value: !Ref PrivateSecurityGroup
+    Export:
+      Name: !Sub '${ProjectName}-PrivateSecurityGroupId'

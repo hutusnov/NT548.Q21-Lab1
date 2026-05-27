@@ -1,0 +1,68 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "AWS Infrastructure - Compute Module"
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: "nt548-lab1"
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: "EC2 KeyPair for SSH access to EC2"
+    Default: "lab1-aws-key"
+  InstanceType:
+    Type: String
+    Default: "t2.micro"
+    AllowedValues:
+      - t2.micro
+      - t3.micro
+
+Mappings:
+  RegionMap:
+    ap-southeast-1:
+      AMI: ami-0750a20e9959e444f # Amazon Linux 2 in ap-southeast-1
+    us-east-1:
+      AMI: ami-0df8c184d5f6ae949
+
+Resources:
+  PublicInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !FindInMap [RegionMap, !Ref "AWS::Region", AMI]
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyName
+      NetworkInterfaces:
+        - GroupSet:
+            - !ImportValue
+              "Fn::Sub": "${ProjectName}-PublicSecurityGroupId"
+          AssociatePublicIpAddress: true
+          DeviceIndex: "0"
+          SubnetId: !ImportValue
+            "Fn::Sub": "${ProjectName}-PublicSubnetId"
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-public-instance"
+
+  PrivateInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !FindInMap [RegionMap, !Ref "AWS::Region", AMI]
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyName
+      NetworkInterfaces:
+        - GroupSet:
+            - !ImportValue
+              "Fn::Sub": "${ProjectName}-PrivateSecurityGroupId"
+          DeviceIndex: "0"
+          SubnetId: !ImportValue
+            "Fn::Sub": "${ProjectName}-PrivateSubnetId"
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-private-instance"
+
+Outputs:
+  PublicInstanceIP:
+    Description: Public IP of the Public Instance
+    Value: !GetAtt PublicInstance.PublicIp
+  PrivateInstanceIP:
+    Description: Private IP of the Private Instance
+    Value: !GetAtt PrivateInstance.PrivateIp
