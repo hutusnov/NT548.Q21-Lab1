@@ -28,13 +28,10 @@ Parameters:
     AllowedValues:
       - t2.micro
       - t3.micro
-
-Mappings:
-  RegionMap:
-    ap-southeast-1:
-      AMI: ami-0750a20e9959e444f # Amazon Linux 2 in ap-southeast-1
-    us-east-1:
-      AMI: ami-0df8c184d5f6ae949
+  LatestAmiId:
+    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+    Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
+    Description: 'SSM Parameter to get the latest Amazon Linux 2 AMI ID'
 
 Resources:
   # VPC
@@ -176,7 +173,7 @@ Resources:
   PublicInstance:
     Type: AWS::EC2::Instance
     Properties:
-      ImageId: !FindInMap [RegionMap, !Ref "AWS::Region", AMI]
+      ImageId: !Ref LatestAmiId
       InstanceType: !Ref InstanceType
       KeyName: !Ref KeyName
       NetworkInterfaces:
@@ -192,7 +189,7 @@ Resources:
   PrivateInstance:
     Type: AWS::EC2::Instance
     Properties:
-      ImageId: !FindInMap [RegionMap, !Ref "AWS::Region", AMI]
+      ImageId: !Ref LatestAmiId
       InstanceType: !Ref InstanceType
       KeyName: !Ref KeyName
       NetworkInterfaces:
